@@ -4,56 +4,134 @@ const port = 3000;
 const app = express();
 app.use(express.json());
 
-function calcularTEMP(valor_original){
+function calcularTEMP(valor_original, unidade_original){
     const tempCelsius = parseFloat(valor_original);
-    const tempCalculada = (tempCelsius * 9 / 5) + 32
+    let tempCalculada = 0
+    let classificacao = ""
+    let unidade_convertida = ""
+    if(unidade_original === "C"){
+        tempCalculada = (tempCelsius * 9 / 5) + 32
+        unidade_convertida = "F";
+
+        if(tempCalculada < 50){
+            classificacao = "O clima esta frio"
+        }else if(tempCalculada >= 50 && tempCalculada <= 70){
+            classificacao = "O clima esta agradavel"
+        }else{
+            classificacao = "O clima esta quente"
+        }
+    }else{
+        tempCalculada = (tempCelsius - 32) * 5 / 9
+        unidade_convertida = "C";
+
+        if(tempCalculada < 10){
+            classificacao = "O clima esta frio"
+        }else if(tempCalculada >= 10 && tempCalculada <= 21){
+            classificacao = "O clima esta agradavel"
+        }else{
+            classificacao = "O clima esta quente"
+        }
+    }
     const valor_convertido = parseFloat(tempCalculada.toFixed(2));
-
-    let classificacao = ""
-    if(valor_convertido < 50){
-        classificacao = "O clima esta frio"
-    }else if(valor_convertido >= 50 && valor_convertido <= 70){
-        classificacao = "O clima esta agradavel"
-    }else{
-        classificacao = "O clima esta quente"
-    }
-    return {valor_convertido,classificacao};
+    return {valor_convertido,classificacao, unidade_convertida};
 }
 
-function calcularVelo(valor_original){
+function calcularVelo(valor_original, unidade_original){
     const velocidadeBase = parseFloat(valor_original);
-    const velocidadeConvertida = velocidadeBase / 3.6
-    const valor_convertido = parseFloat(velocidadeConvertida.toFixed(2));
-
+    let velocidadeConvertida = 0;
     let classificacao = ""
+    let unidade_convertida = ""
     
-    if(valor_convertido < 11.1){
-        classificacao = "Baixa Velocidade"
-    }else if (valor_convertido >= 11.1 && valor_convertido <= 25){
-        classificacao = "Velocidade Moderada"
+    if(unidade_original === "km/h"){
+        velocidadeConvertida = velocidadeBase / 3.6
+        unidade_convertida = "m/s";
+
+        if(velocidadeConvertida < 11.1){
+            classificacao = "Baixa Velocidade"
+        }else if (velocidadeConvertida >= 11.1 && velocidadeConvertida <= 25){
+            classificacao = "Velocidade Moderada"
+        }else{
+            classificacao = "Alta Velocidade"
+        }
     }else{
-        classificacao = "Alta Velocidade"
+        velocidadeConvertida = velocidadeBase * 3.6
+        unidade_convertida = "km/h";
+        if(velocidadeConvertida < 5){
+            classificacao = "Baixa Velocidade"
+        }else if (velocidadeConvertida >= 5 && velocidadeConvertida <= 90){
+            classificacao = "Velocidade Moderada"
+        }else{
+            classificacao = "Alta Velocidade"
+        }
     }
-    return {valor_convertido,classificacao};
+    const valor_convertido = parseFloat(velocidadeConvertida.toFixed(2));
+    return {valor_convertido,classificacao, unidade_convertida};
 }
 
-function calcularCom(valor_original){
+function calcularCom(valor_original, unidade_original){
     const comprimentoM = parseFloat(valor_original);
-    const comprimentoConvertido = comprimentoM * 3.28084
-    const valor_convertido = parseFloat(comprimentoConvertido.toFixed(2));
-
+    let comprimentoConvertido
     let classificacao = ""
-    
-    if(comprimentoM < 5){
-        classificacao = "Curto"
-    }else if(comprimentoM >=5 && comprimentoM <= 50){
-        classificacao = "Curto"
+    let unidade_convertida = ""
+    if(unidade_original === "m"){
+        comprimentoConvertido = comprimentoM * 3.28084
+        unidade_convertida = "ft";
+        if(comprimentoConvertido < 16.40){
+            classificacao = "Curto"
+        }else if(comprimentoConvertido >=16.40 && comprimentoConvertido <= 164){
+            classificacao = "Médio"
+        }else{
+            classificacao = "Longo"
+        }
+
     }else{
-        classificacao = "Longo"
+        comprimentoConvertido = comprimentoM * 0.3048
+        unidade_convertida = "m";
+        if(comprimentoConvertido < 5){
+            classificacao = "Curto"
+        }else if(comprimentoConvertido >=5 && comprimentoConvertido <= 50){
+            classificacao = "Médio"
+        }else{
+            classificacao = "Longo"
+        }
     }
-    return {valor_convertido, classificacao};
+    const valor_convertido = parseFloat(comprimentoConvertido.toFixed(2));
+    return {valor_convertido, classificacao, unidade_convertida};
 
 
+}
+
+function resultadoConv(tipo,valor_original, unidade_original){
+    let resultado = {}
+    
+    tipo = tipo.toLowerCase()
+    
+    if(tipo !== "temperatura" && tipo !== "velocidade" && tipo !== "comprimento"){
+        return { erro: "Tipo inválido! Os tipos aceitos são: temperatura, velocidade ou comprimento." };
+    }
+
+    if(tipo == "temperatura"){
+        if(unidade_original !== "C" && unidade_original !== "F"){
+            return { erro: `Unidade '${unidade_original}' incompatível para temperatura. Use 'C' ou 'F'.` };
+        }else{
+            resultado = calcularTEMP(Number(valor_original), unidade_original);
+        }
+
+    }else if(tipo === "velocidade"){
+        if(unidade_original !== "km/h" && unidade_original !== "m/s"){
+            return { erro: `Unidade '${unidade_original}' incompatível para velocidade. Use 'km/h' ou 'm/s'.` };
+        }else{
+            return calcularVelo(Number(valor_original), unidade_original);
+        }
+       
+    }else if(tipo == "comprimento"){
+        if(unidade_original !== "m" && unidade_original !== "ft"){
+            return { erro: `Unidade '${unidade_original}' incompatível para comprimento. Use 'm' ou 'ft'.` };
+        }else{
+            resultado = calcularCom(Number(valor_original), unidade_original)
+        }
+    }
+    return resultado;
 }
 
 
@@ -89,9 +167,9 @@ app.get('/medicao/:id', async(req,res) => {
     const {id} = req.params;
     try {
         const[rows] = await db.execute('select * from medicoes where id=?',[id]);
-        if(rows.leght ===0){
+        if(rows.length ===0){
             return res.status(404).json({
-                mensagem:"Paciente nao encontrado",
+                mensagem:"Medicao nao encontrado",
                 detalhes:"error.message"            
             });
         }
@@ -105,25 +183,27 @@ app.get('/medicao/:id', async(req,res) => {
 });
 
 app.post('/medicao', async(req,res) => {
-    const {descricao, tipo, valor_original, unidade_original, valor_convertido, unidade_convertida,  classificacao} = req.body
-    if(!unidade_convertida||!unidade_original||!descricao||!valor_convertido || !valor_original || !tipo || !classificacao){
-        return res.status(404).json({
-            mensagem:"Verifique se todos os dados foram preenchidos!",
-            detalhes:error.message 
+    const {descricao, valor: valor_original, unidade_original, tipo} = req.body
+
+    if(!descricao || descricao.trim() === "" || !valor_original || !unidade_original || !tipo){
+        return res.status(400).json({
+            mensagem: "Verifique se todos os dados foram preenchidos (incluindo a descrição)!"
         });
     }
-    if(tipo == "temperatura" || tipo == "Temperatura"){
-        const{valor_convertido,classificacao} = calcularTEMP(Number(valor_original));
-    }else if(tipo === "velocidade" || tipo === "Velocidade"){
-        const{valor_convertido,classificacao} = calcularVelo(Number(valor_original))
-    }else if(tipo == "comprimento" || tipo=="Comprimento"){
-        const{valor_convertido,classificacao} = calcularCom(Number(valor_original))
-    }else{
-        return res.status(404).json({
-            mensagem:"Tipo invalido",
-            detalhes:error.message 
+
+    if(isNaN(Number(valor_original))){
+        return res.status(400).json({
+            mensagem: "O campo 'valor_original' precisa ser um número válido!"
+        });
+    }
+
+    const result = resultadoConv(tipo, valor_original, unidade_original);
+    if(result.erro){
+        return res.status(400).json({
+            mensagem:"Tipo ou unidade invalido", 
         })
     }
+    const {valor_convertido, classificacao, unidade_convertida} = result;
     try {
         const[rows] = await db.execute('INSERT INTO `medicoes` (`descricao`, `tipo`, `valor_original`, `unidade_original`, `valor_convertido`, `unidade_convertida`,`classificacao`) VALUES (?,?,?,?,?,?,?);', [descricao,tipo,valor_original,unidade_original,valor_convertido,unidade_convertida,classificacao]);
         res.status(201).json({
@@ -139,7 +219,8 @@ app.post('/medicao', async(req,res) => {
     } catch (error) {
         res.status(500).json({
             mensagem:"Erro interno do servidor",
-            detalhes:error.message
+            detalhes:error.message,
+            return: null
         });  
     }
 })
